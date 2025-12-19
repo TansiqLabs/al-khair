@@ -16,6 +16,7 @@ if (!file_exists(ROOT_PATH . '/install.lock') || !file_exists(ROOT_PATH . '/conf
 require_once ROOT_PATH . '/config/app.php';
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/includes/functions.php';
+require_once ROOT_PATH . '/includes/auth.php';
 
 // Check if user is logged in
 if (!isLoggedIn()) {

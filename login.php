@@ -69,13 +69,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['role'] = $user['role'];
 
+                // Regenerate session ID
+                session_regenerate_id(true);
+
                 // Log activity
                 logActivity($db, 'user_login', 'user', $user['id'], 'User logged in');
 
                 // Set remember me cookie
                 if ($remember) {
-                    $token = generateToken(32);
-                    setcookie('remember_token', $token, time() + (86400 * 30), '/');
+                    $selector = bin2hex(random_bytes(16));
+                    $validator = bin2hex(random_bytes(32));
+                    $validator_hash = hash('sha256', $validator);
+                    $expires = new DateTime('+30 days');
+
+                    $stmt = $db->prepare("
+                        INSERT INTO user_tokens (user_id, selector, validator_hash, expires)
+                        VALUES (?, ?, ?, ?)
+                    ");
+                    $stmt->execute([$user['id'], $selector, $validator_hash, $expires->format('Y-m-d H:i:s')]);
+
+                    setcookie('remember_token', $selector . ':' . $validator, $expires->getTimestamp(), '/', '', false, true);
                 }
 
                 header('Location: dashboard/index.php');

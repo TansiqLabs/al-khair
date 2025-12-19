@@ -14,6 +14,7 @@ if (!file_exists(ROOT_PATH . '/install.lock') || !file_exists(ROOT_PATH . '/conf
 require_once ROOT_PATH . '/config/app.php';
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/includes/functions.php';
+require_once ROOT_PATH . '/includes/auth.php';
 
 if (!isLoggedIn()) {
     header('Location: ../login.php');
@@ -206,6 +207,7 @@ include ROOT_PATH . '/dashboard/header.php';
         <form id="donorForm">
             <div class="modal-body">
                 <input type="hidden" id="donor_id" name="donor_id">
+                <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo getCsrfToken(); ?>">
                 
                 <div class="form-row">
                     <div class="form-group">

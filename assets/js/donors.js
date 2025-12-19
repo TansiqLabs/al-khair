@@ -173,10 +173,12 @@ function deleteDonor(id, name) {
         return;
     }
 
+    const csrfToken = document.getElementById('csrf_token').value;
+
     fetch('../api/donors.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `action=delete&id=${id}`
+        body: `action=delete&id=${id}&csrf_token=${csrfToken}`
     })
     .then(response => response.json())
     .then(data => {

@@ -73,6 +73,14 @@ function getDonor() {
 
 function createDonor() {
     global $db;
+
+    if (!isAdmin()) {
+        jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+    }
+
+    if (!isset($_POST['csrf_token']) || !checkCsrfToken($_POST['csrf_token'])) {
+        jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
     
     $fullName = sanitize($_POST['full_name'] ?? '');
     $email = sanitize($_POST['email'] ?? '');
@@ -132,6 +140,14 @@ function createDonor() {
 
 function updateDonor() {
     global $db;
+
+    if (!isAdmin()) {
+        jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+    }
+
+    if (!isset($_POST['csrf_token']) || !checkCsrfToken($_POST['csrf_token'])) {
+        jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
     
     $id = $_POST['donor_id'] ?? 0;
     $fullName = sanitize($_POST['full_name'] ?? '');
@@ -183,6 +199,14 @@ function updateDonor() {
 
 function deleteDonor() {
     global $db;
+
+    if (!isAdmin()) {
+        jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
+    }
+
+    if (!isset($_POST['csrf_token']) || !checkCsrfToken($_POST['csrf_token'])) {
+        jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
     
     $id = $_POST['id'] ?? 0;
     

@@ -24,6 +24,11 @@ session_destroy();
 
 // Remove remember me cookie
 if (isset($_COOKIE['remember_token'])) {
+    list($selector, $validator) = explode(':', $_COOKIE['remember_token']);
+    if ($selector) {
+        $stmt = $db->prepare("DELETE FROM user_tokens WHERE selector = ?");
+        $stmt->execute([$selector]);
+    }
     setcookie('remember_token', '', time() - 3600, '/');
 }
 
