@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -31,7 +31,7 @@
         }
 
         .installer-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #fff;
             padding: 30px;
             text-align: center;
@@ -86,7 +86,7 @@
         }
 
         .step.active {
-            background: #667eea;
+            background: #10b981;
             color: #fff;
         }
 
@@ -122,7 +122,7 @@
         input:focus,
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #10b981;
         }
 
         textarea {
@@ -141,14 +141,14 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #fff;
             width: 100%;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
         }
 
         .btn-secondary {
@@ -235,7 +235,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
             transition: width 0.3s;
         }
 
@@ -257,7 +257,7 @@
             width: 20px;
             height: 20px;
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #10b981;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-left: 10px;
@@ -598,7 +598,21 @@
                 method: 'POST',
                 body: completeData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                console.log('Server response:', text);
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', text);
+                    throw new Error('Server returned invalid JSON: ' + text.substring(0, 100));
+                }
+            })
             .then(data => {
                 if (data.success) {
                     showMessage('org-message', data.message + ' Redirecting...', 'success');
@@ -608,12 +622,12 @@
                         window.location.href = '../login.php';
                     }, 2000);
                 } else {
-                    showMessage('org-message', data.message, 'error');
+                    showMessage('org-message', 'Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Installation error:', error);
-                showMessage('org-message', 'Installation failed. Please check console for details.', 'error');
+                showMessage('org-message', 'Installation failed: ' + error.message, 'error');
             });
         });
 
