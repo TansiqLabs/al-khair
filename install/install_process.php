@@ -40,6 +40,10 @@ function checkRequirements() {
     $installDir = __DIR__;
     $rootDir = dirname($installDir);
     
+    // Check schema file with multiple possible paths
+    $schemaPath = $installDir . '/schema.sql';
+    $schemaExists = file_exists($schemaPath);
+    
     $requirements = [
         [
             'name' => 'PHP Version (>= 7.4)',
@@ -62,8 +66,8 @@ function checkRequirements() {
             'status' => extension_loaded('mbstring')
         ],
         [
-            'name' => 'Schema File Exists',
-            'status' => file_exists($installDir . '/schema.sql')
+            'name' => 'Schema File Exists (' . $schemaPath . ')',
+            'status' => $schemaExists
         ],
         [
             'name' => 'Config Directory Writable',
@@ -91,7 +95,20 @@ function checkRequirements() {
         ]
     ];
 
-    jsonResponse(['success' => true, 'requirements' => $requirements]);
+    // Add debug information
+    $debug = [
+        'installDir' => $installDir,
+        'rootDir' => $rootDir,
+        'schemaPath' => $schemaPath,
+        'schemaExists' => $schemaExists,
+        'filesInInstallDir' => is_dir($installDir) ? scandir($installDir) : []
+    ];
+
+    jsonResponse([
+        'success' => true, 
+        'requirements' => $requirements,
+        'debug' => $debug
+    ]);
 }
 
 function testDatabase() {

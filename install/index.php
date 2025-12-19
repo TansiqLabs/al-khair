@@ -466,6 +466,11 @@
             fetch('install_process.php?action=check_requirements')
                 .then(response => response.json())
                 .then(data => {
+                    // Log debug information
+                    if (data.debug) {
+                        console.log('Installation Debug Info:', data.debug);
+                    }
+                    
                     const list = document.getElementById('requirements-list');
                     list.innerHTML = '';
 
