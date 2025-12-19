@@ -27,6 +27,7 @@ Thumbs.db
 *~
 
 # Backup files
-*.sql
 *.backup
 backups/*
+*.sql
+!install/schema.sql
