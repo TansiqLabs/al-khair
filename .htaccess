@@ -1,5 +1,8 @@
 # Al-Khair - Apache Configuration
 
+# Prevent directory listing
+Options -Indexes
+
 # Enable Rewrite Engine
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -8,17 +11,14 @@
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     
-    # Prevent directory listing
-    Options -Indexes
-    
-    # Allow access to assets, api, install directories
-    RewriteCond %{REQUEST_URI} ^/(assets|api|install|uploads)/ [NC]
+    # Allow access to real files and directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
     
-    # Redirect root to login page if not installed
-    # RewriteCond %{REQUEST_URI} ^/?$
-    # RewriteCond %{DOCUMENT_ROOT}/install.lock !-f
-    # RewriteRule ^ /install/index.php [L,R=302]
+    # Allow direct access to specific directories
+    RewriteCond %{REQUEST_URI} ^/(assets|api|install|uploads|logs|cache)/ [NC]
+    RewriteRule ^ - [L]
 </IfModule>
 
 # Security Headers
