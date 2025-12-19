@@ -488,12 +488,22 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    installData.database = Object.fromEntries(formData);
+                    // Store database credentials without the action field
+                    installData.database = {
+                        db_host: formData.get('db_host'),
+                        db_name: formData.get('db_name'),
+                        db_user: formData.get('db_user'),
+                        db_pass: formData.get('db_pass')
+                    };
                     showMessage('db-message', data.message, 'success');
-                    setTimeout(() => goToStep(3), 1000);
+                    setTimeout(() => goToStep(3), 1500);
                 } else {
                     showMessage('db-message', data.message, 'error');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('db-message', 'Connection failed. Please check your credentials.', 'error');
             });
         });
 
@@ -508,16 +518,32 @@
                 return;
             }
 
-            const formData = new FormData(this);
-            installData.admin = Object.fromEntries(formData);
-            goToStep(4);
+            if (password.length < 8) {
+                showMessage('admin-message', 'Password must be at least 8 characters long!', 'error');
+                return;
+            }
+
+            installData.admin = {
+                admin_name: document.getElementById('admin_name').value,
+                admin_username: document.getElementById('admin_username').value,
+                admin_email: document.getElementById('admin_email').value,
+                admin_password: password
+            };
+            
+            showMessage('admin-message', 'Admin account validated!', 'success');
+            setTimeout(() => goToStep(4), 800);
         });
 
         // Organization form
         document.getElementById('organization-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            const formData = new FormData(this);
-            installData.organization = Object.fromEntries(formData);
+            
+            installData.organization = {
+                org_name: document.getElementById('org_name').value,
+                org_address: document.getElementById('org_address').value,
+                org_phone: document.getElementById('org_phone').value,
+                org_email: document.getElementById('org_email').value
+            };
 
             // Combine all data
             const completeData = new FormData();
@@ -542,13 +568,17 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showMessage('org-message', data.message, 'success');
+                    showMessage('org-message', data.message + ' Redirecting...', 'success');
                     setTimeout(() => {
                         window.location.href = '../index.php';
                     }, 2000);
                 } else {
                     showMessage('org-message', data.message, 'error');
                 }
+            })
+            .catch(error => {
+                console.error('Installation error:', error);
+                showMessage('org-message', 'Installation failed. Please check console for details.', 'error');
             });
         });
 
