@@ -11,7 +11,10 @@ ini_set('log_errors', 1);
 session_start();
 header('Content-Type: application/json');
 
-define('ROOT_PATH', dirname(__DIR__));
+// Define ROOT_PATH more reliably
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', realpath(dirname(__DIR__)));
+}
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
@@ -55,16 +58,32 @@ function checkRequirements() {
             'status' => extension_loaded('mbstring')
         ],
         [
+            'name' => 'Schema File Exists',
+            'status' => file_exists(ROOT_PATH . '/install/schema.sql') || file_exists(__DIR__ . '/schema.sql')
+        ],
+        [
             'name' => 'Config Directory Writable',
-            'status' => is_writable(ROOT_PATH . '/config')
+            'status' => is_dir(ROOT_PATH . '/config') && is_writable(ROOT_PATH . '/config')
+        ],
+        [
+            'name' => 'Config Template Exists',
+            'status' => file_exists(ROOT_PATH . '/config/database.php.template')
         ],
         [
             'name' => 'Uploads Directory Writable',
-            'status' => is_writable(ROOT_PATH . '/uploads')
+            'status' => is_dir(ROOT_PATH . '/uploads') && is_writable(ROOT_PATH . '/uploads')
         ],
         [
             'name' => 'Logs Directory Writable',
-            'status' => is_writable(ROOT_PATH . '/logs')
+            'status' => is_dir(ROOT_PATH . '/logs') && is_writable(ROOT_PATH . '/logs')
+        ],
+        [
+            'name' => 'Cache Directory Writable',
+            'status' => is_dir(ROOT_PATH . '/cache') && is_writable(ROOT_PATH . '/cache')
+        ],
+        [
+            'name' => 'Root Directory Writable',
+            'status' => is_writable(ROOT_PATH)
         ]
     ];
 
@@ -144,21 +163,34 @@ function completeInstallation() {
 
         // Read and execute schema (split by semicolon for multiple queries)
         $schemaFile = ROOT_PATH . '/install/schema.sql';
+        
+        // Try alternate path if first one fails
         if (!file_exists($schemaFile)) {
-            throw new Exception('Schema file not found');
+            $schemaFile = __DIR__ . '/schema.sql';
+        }
+        
+        if (!file_exists($schemaFile)) {
+            throw new Exception('Schema file not found. Checked: ' . ROOT_PATH . '/install/schema.sql and ' . __DIR__ . '/schema.sql');
         }
         
         $schema = file_get_contents($schemaFile);
+        if ($schema === false) {
+            throw new Exception('Failed to read schema file');
+        }
+        
+        // Split queries by semicolon and filter empty ones
         $queries = array_filter(array_map('trim', explode(';', $schema)));
         
+        $executedCount = 0;
         foreach ($queries as $query) {
-            if (!empty($query)) {
+            if (!empty($query) && strlen($query) > 10) {
                 try {
                     $pdo->exec($query);
+                    $executedCount++;
                 } catch (PDOException $e) {
-                    // Log but continue if table already exists
+                    // Continue if table already exists, otherwise throw
                     if (strpos($e->getMessage(), 'already exists') === false) {
-                        throw new Exception('Schema error: ' . $e->getMessage());
+                        throw new Exception('Schema execution error at query ' . ($executedCount + 1) . ': ' . $e->getMessage());
                     }
                 }
             }
@@ -189,17 +221,38 @@ function completeInstallation() {
         }
 
         // Create database config file
-        $configTemplate = file_get_contents(ROOT_PATH . '/config/database.php.template');
+        $configDir = ROOT_PATH . '/config';
+        $templateFile = $configDir . '/database.php.template';
+        $configFile = $configDir . '/database.php';
+        
+        if (!is_dir($configDir)) {
+            throw new Exception('Config directory not found: ' . $configDir);
+        }
+        
+        if (!file_exists($templateFile)) {
+            throw new Exception('Config template not found: ' . $templateFile);
+        }
+        
+        if (!is_writable($configDir)) {
+            throw new Exception('Config directory is not writable: ' . $configDir);
+        }
+        
+        $configTemplate = file_get_contents($templateFile);
         $configContent = str_replace(
             ['{{DB_HOST}}', '{{DB_NAME}}', '{{DB_USER}}', '{{DB_PASS}}'],
             [$dbHost, $dbName, $dbUser, $dbPass],
             $configTemplate
         );
 
-        file_put_contents(ROOT_PATH . '/config/database.php', $configContent);
+        if (file_put_contents($configFile, $configContent) === false) {
+            throw new Exception('Failed to write config file');
+        }
 
         // Create install.lock file
-        file_put_contents(ROOT_PATH . '/install.lock', date('Y-m-d H:i:s'));
+        $lockFile = ROOT_PATH . '/install.lock';
+        if (file_put_contents($lockFile, date('Y-m-d H:i:s')) === false) {
+            throw new Exception('Failed to create install.lock file. Check directory permissions.');
+        }
 
         jsonResponse([
             'success' => true,
