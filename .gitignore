@@ -1,0 +1,32 @@
+# Configuration files
+config/database.php
+config/app.php
+install.lock
+
+# Upload directories
+uploads/*
+!uploads/.htaccess
+
+# Cache and logs
+cache/*
+!cache/.htaccess
+logs/*
+!logs/.htaccess
+
+# Environment files
+.env
+.env.local
+
+# System files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.sql
+*.backup
+backups/*
