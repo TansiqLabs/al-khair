@@ -36,6 +36,10 @@ switch ($action) {
 }
 
 function checkRequirements() {
+    // Use __DIR__ for reliable path to current directory
+    $installDir = __DIR__;
+    $rootDir = dirname($installDir);
+    
     $requirements = [
         [
             'name' => 'PHP Version (>= 7.4)',
@@ -59,31 +63,31 @@ function checkRequirements() {
         ],
         [
             'name' => 'Schema File Exists',
-            'status' => file_exists(ROOT_PATH . '/install/schema.sql') || file_exists(__DIR__ . '/schema.sql')
+            'status' => file_exists($installDir . '/schema.sql')
         ],
         [
             'name' => 'Config Directory Writable',
-            'status' => is_dir(ROOT_PATH . '/config') && is_writable(ROOT_PATH . '/config')
+            'status' => is_dir($rootDir . '/config') && is_writable($rootDir . '/config')
         ],
         [
             'name' => 'Config Template Exists',
-            'status' => file_exists(ROOT_PATH . '/config/database.php.template')
+            'status' => file_exists($rootDir . '/config/database.php.template')
         ],
         [
             'name' => 'Uploads Directory Writable',
-            'status' => is_dir(ROOT_PATH . '/uploads') && is_writable(ROOT_PATH . '/uploads')
+            'status' => is_dir($rootDir . '/uploads') && is_writable($rootDir . '/uploads')
         ],
         [
             'name' => 'Logs Directory Writable',
-            'status' => is_dir(ROOT_PATH . '/logs') && is_writable(ROOT_PATH . '/logs')
+            'status' => is_dir($rootDir . '/logs') && is_writable($rootDir . '/logs')
         ],
         [
             'name' => 'Cache Directory Writable',
-            'status' => is_dir(ROOT_PATH . '/cache') && is_writable(ROOT_PATH . '/cache')
+            'status' => is_dir($rootDir . '/cache') && is_writable($rootDir . '/cache')
         ],
         [
             'name' => 'Root Directory Writable',
-            'status' => is_writable(ROOT_PATH)
+            'status' => is_writable($rootDir)
         ]
     ];
 
@@ -162,15 +166,11 @@ function completeInstallation() {
         ]);
 
         // Read and execute schema (split by semicolon for multiple queries)
-        $schemaFile = ROOT_PATH . '/install/schema.sql';
-        
-        // Try alternate path if first one fails
-        if (!file_exists($schemaFile)) {
-            $schemaFile = __DIR__ . '/schema.sql';
-        }
+        // Use __DIR__ for reliable path to schema file
+        $schemaFile = __DIR__ . '/schema.sql';
         
         if (!file_exists($schemaFile)) {
-            throw new Exception('Schema file not found. Checked: ' . ROOT_PATH . '/install/schema.sql and ' . __DIR__ . '/schema.sql');
+            throw new Exception('Schema file not found at: ' . $schemaFile);
         }
         
         $schema = file_get_contents($schemaFile);
@@ -220,8 +220,9 @@ function completeInstallation() {
             $stmt->execute([$value, $key]);
         }
 
-        // Create database config file
-        $configDir = ROOT_PATH . '/config';
+        // Create database config file using reliable paths
+        $rootDir = dirname(__DIR__);
+        $configDir = $rootDir . '/config';
         $templateFile = $configDir . '/database.php.template';
         $configFile = $configDir . '/database.php';
         
@@ -249,7 +250,7 @@ function completeInstallation() {
         }
 
         // Create install.lock file
-        $lockFile = ROOT_PATH . '/install.lock';
+        $lockFile = $rootDir . '/install.lock';
         if (file_put_contents($lockFile, date('Y-m-d H:i:s')) === false) {
             throw new Exception('Failed to create install.lock file. Check directory permissions.');
         }
