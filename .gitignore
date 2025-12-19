@@ -1,6 +1,5 @@
 # Configuration files
 config/database.php
-config/app.php
 install.lock
 pull.php
 
