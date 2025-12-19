@@ -158,7 +158,28 @@
                 }
 
                 function checkUpdates() {
-                    // Will be implemented with update system
-                    alert('Checking for updates...');
+                    const btn = event.target.closest('button');
+                    btn.disabled = true;
+                    btn.innerHTML = '<div class="loading-spinner"></div>';
+                    
+                    fetch('../update.php?action=check')
+                        .then(response => response.json())
+                        .then(data => {
+                            btn.disabled = false;
+                            btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>';
+                            
+                            if (data.success && data.update_available) {
+                                alert(`Update Available!\n\nCurrent Version: ${data.current_version}\nLatest Version: ${data.latest_version}\n\nPlease download from GitHub: TansiqLabs/al-khair`);
+                            } else if (data.success) {
+                                alert('You are running the latest version!');
+                            } else {
+                                alert(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            btn.disabled = false;
+                            btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>';
+                            alert('Failed to check for updates');
+                        });
                 }
             </script>
