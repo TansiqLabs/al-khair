@@ -421,6 +421,22 @@
             organization: {}
         };
 
+        // Load saved data from localStorage on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedData = localStorage.getItem('installData');
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (parsed.database) installData.database = parsed.database;
+                    if (parsed.admin) installData.admin = parsed.admin;
+                    if (parsed.organization) installData.organization = parsed.organization;
+                    console.log('Loaded saved install data:', installData);
+                } catch (e) {
+                    console.error('Failed to load saved data:', e);
+                }
+            }
+        });
+
         function goToStep(step) {
             // Hide all steps
             for (let i = 1; i <= 4; i++) {
@@ -488,13 +504,16 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Store database credentials without the action field
+                    // Store database credentials
                     installData.database = {
                         db_host: formData.get('db_host'),
                         db_name: formData.get('db_name'),
                         db_user: formData.get('db_user'),
                         db_pass: formData.get('db_pass')
                     };
+                    // Save to localStorage to persist across page actions
+                    localStorage.setItem('installData', JSON.stringify(installData));
+                    console.log('Database stored:', installData.database);
                     showMessage('db-message', data.message, 'success');
                     setTimeout(() => goToStep(3), 1500);
                 } else {
@@ -530,6 +549,10 @@
                 admin_password: password
             };
             
+            // Save to localStorage
+            localStorage.setItem('installData', JSON.stringify(installData));
+            console.log('Admin data stored:', installData.admin);
+            
             showMessage('admin-message', 'Admin account validated!', 'success');
             setTimeout(() => goToStep(4), 800);
         });
@@ -538,12 +561,22 @@
         document.getElementById('organization-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Load data from localStorage in case it was lost
+            const savedData = localStorage.getItem('installData');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                if (parsed.database) installData.database = parsed.database;
+                if (parsed.admin) installData.admin = parsed.admin;
+            }
+            
             installData.organization = {
                 org_name: document.getElementById('org_name').value,
                 org_address: document.getElementById('org_address').value,
                 org_phone: document.getElementById('org_phone').value,
                 org_email: document.getElementById('org_email').value
             };
+            
+            console.log('All install data:', installData);
 
             // Combine all data
             const completeData = new FormData();
@@ -569,8 +602,10 @@
             .then(data => {
                 if (data.success) {
                     showMessage('org-message', data.message + ' Redirecting...', 'success');
+                    // Clear localStorage after successful installation
+                    localStorage.removeItem('installData');
                     setTimeout(() => {
-                        window.location.href = '../index.php';
+                        window.location.href = '../login.php';
                     }, 2000);
                 } else {
                     showMessage('org-message', data.message, 'error');
