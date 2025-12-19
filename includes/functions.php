@@ -94,10 +94,7 @@ function getCurrentUrl() {
  * Get base URL
  */
 function getBaseUrl() {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
-    $script = str_replace('/index.php', '', $_SERVER['SCRIPT_NAME']);
-    return $protocol . '://' . $host . $script;
+    return BASE_URL;
 }
 
 /**
