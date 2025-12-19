@@ -13,6 +13,12 @@ if (!file_exists(ROOT_PATH . '/install.lock')) {
     exit;
 }
 
+// Verify required files exist
+if (!file_exists(ROOT_PATH . '/config/database.php')) {
+    header('Location: install/index.php');
+    exit;
+}
+
 // Check if already logged in
 if (isset($_SESSION['user_id'])) {
     header('Location: dashboard/index.php');

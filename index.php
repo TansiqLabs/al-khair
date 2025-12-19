@@ -21,6 +21,12 @@ if (!file_exists(ROOT_PATH . '/install.lock')) {
     exit;
 }
 
+// Verify required files exist
+if (!file_exists(ROOT_PATH . '/config/database.php')) {
+    header('Location: install/index.php');
+    exit;
+}
+
 // Load configuration
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/includes/functions.php';
