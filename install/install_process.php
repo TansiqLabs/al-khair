@@ -3,6 +3,11 @@
  * Installation Process Handler
  */
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display in output
+ini_set('log_errors', 1);
+
 session_start();
 header('Content-Type: application/json');
 
@@ -137,9 +142,27 @@ function completeInstallation() {
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
 
-        // Read and execute schema
-        $schema = file_get_contents(ROOT_PATH . '/install/schema.sql');
-        $pdo->exec($schema);
+        // Read and execute schema (split by semicolon for multiple queries)
+        $schemaFile = ROOT_PATH . '/install/schema.sql';
+        if (!file_exists($schemaFile)) {
+            throw new Exception('Schema file not found');
+        }
+        
+        $schema = file_get_contents($schemaFile);
+        $queries = array_filter(array_map('trim', explode(';', $schema)));
+        
+        foreach ($queries as $query) {
+            if (!empty($query)) {
+                try {
+                    $pdo->exec($query);
+                } catch (PDOException $e) {
+                    // Log but continue if table already exists
+                    if (strpos($e->getMessage(), 'already exists') === false) {
+                        throw new Exception('Schema error: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
 
         // Create admin user
         $hashedPassword = password_hash($adminPassword, PASSWORD_BCRYPT, ['cost' => 12]);
@@ -183,10 +206,19 @@ function completeInstallation() {
             'message' => 'Installation completed successfully! Redirecting to login...'
         ]);
 
+    } catch (PDOException $e) {
+        jsonResponse([
+            'success' => false,
+            'message' => 'Database error: ' . $e->getMessage(),
+            'code' => $e->getCode(),
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine()
+        ]);
     } catch (Exception $e) {
         jsonResponse([
             'success' => false,
-            'message' => 'Installation failed: ' . $e->getMessage()
+            'message' => 'Installation failed: ' . $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ]);
     }
 }
