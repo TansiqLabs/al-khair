@@ -2,6 +2,7 @@
 config/database.php
 config/app.php
 install.lock
+pull.php
 
 # Upload directories
 uploads/*
